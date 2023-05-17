@@ -209,7 +209,7 @@ void get_req_resource(const char* path, int client, char* auth_data)
 // client connection
 void respond(int slot) {
   int rcvd;
-  char date[30];
+  char date[70];
   char *auth_data = NULL, *auth;
 
   buf = malloc(BUF_SIZE);
@@ -227,38 +227,26 @@ void respond(int slot) {
 
     uri_unescape(uri);
     
-    fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
+    //fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
     
     char *clientIP = inet_ntoa(clientaddr.sin_addr);
     
-    //time_t curTime;// = time(NULL);
-    //struct tm tm = *localtime(&curTime);
-    //sprintf(date, "%d-%02d-%02d %02d:%02d:%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec); 
-    //time(&curTime);
+    time_t curTime = time(NULL);
+    struct tm tm = *localtime(&curTime);
+    sprintf(date, "%d-%02d-%02d %02d:%02d:%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec); 
+    
     //!!!!
-    //strftime(date, 30, "%d/%b/%Y:%H:%M:%S %z", localtime(&curTime));
-    //sprintf(logMessage, "%s - - \"%s %s %s\"", clientIP, date, method, uri, prot);
-    sprintf(logMessage, "%s - - [%s] \"%s %s %s\"", clientIP, method, uri, prot);
-    fprintf(logFile, "%s\n", logMessage);
-
-    //fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);
     
-    
-    char * ip = inet_ntoa(clientaddr.sin_addr);
-    time_t rawTime;
-    struct tm * timeInfo;
-    char date[30];
-    time(&rawTime);
-    //timeInfo = localtime(&rawTime);
-    //strftime(date, 30, "%d/%b/%Y:%H:%M:%S %z", timeInfo);
-    
-    //myLog = fopen("var/log/myLogs/myLog.log", "a");
-    //char* log  = malloc(1024);
     //Запись в формате NCSA Common log format
     //'-' означает пропущенное поле
-    //sprintf(logMessage, "%s - - [%s] \"%s %s %s\" - -", ip, date, method, uri, prot);
+    sprintf(logMessage, "%s - - [%s] \"%s %s %s\"", clientIP, date, method, uri, prot);
+    //sprintf(logMessage, "%s - - \"%s %s %s\"", clientIP, method, uri, prot);
     //Журнализация в собственный текстовой журнал HTTP-запросов
-    //fprintf(logFile, "%s\n", logMessage);
+    fprintf(logFile, "%s\n", logMessage);
+
+    //fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);   
+    
+   
 
     qs = strchr(uri, '?');
 
@@ -312,13 +300,10 @@ void respond(int slot) {
     close(clientfd);
     //!!!!
     //Журнализация в собственный текстовой журнал HTTP-запросов
-    //sprintf(logMessage, "%s %d %d \"%s %s %s\"", ip, clientfd, clientfd, method, uri, prot);
-    //sprintf(logMessage, "%s %d %d [%s] \"%s %s %s\"", ip, clientfd, clientfd, date, method, uri, prot);
+    //sprintf(logMessage, "%s %d %d \"%s %s %s\"", clientIP, clientfd, clientfd, method, uri, prot);
+    sprintf(logMessage, "%s %d %d [%s] \"%s %s %s\"", clientIP, clientfd, clientfd, date, method, uri, prot);
+        
     
-    
-     
-    sprintf(logMessage, "%s %d %d \"%s %s %s\"", clientIP, clientfd, clientfd, method, uri, prot);
-    //sprintf(logMessage, "%s %d %d [%s] \"%s %s %s\"", clientIP, clientfd, clientfd, date, method, uri, prot);
     
     // call router
     route();
