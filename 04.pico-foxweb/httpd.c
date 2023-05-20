@@ -27,7 +27,8 @@ char *method, // "GET" or "POST"
     *qs,      // "a=1&b=2" things after  '?'
     *prot,    // "HTTP/1.1"
     *payload, // for POST
-    *logMessage;
+    *logMessage,
+    *user;
     
 static char *buf;
 
@@ -36,6 +37,8 @@ static char *buf;
 FILE * logFile;
 int payload_size;
 struct sockaddr_in clientaddr;
+FILE *autFile;
+int attemp;
 
 bool author = false;
 bool accessLog = false;
@@ -48,7 +51,8 @@ void serve_forever(const char *PORT, const char *ROOT) {
 
   int slot = 0;
   
-  logFile = fopen("/var/log/picofoxweb/log.txt", "w");// /var/log/picofoxweb/
+  logFile = fopen("log.txt", "w");// /var/log/picofoxweb/
+  autFile = fopen("aut.txt", "w+");//w+ a+
 
   //printf("Server started %shttp://127.0.0.1:%s%s\n", "\033[92m", PORT,
   //      "\033[0m");
@@ -64,13 +68,14 @@ void serve_forever(const char *PORT, const char *ROOT) {
   start_server(PORT);
   
   logMessage = malloc(1024);
+  user = malloc(1024);
   sprintf(logMessage, "Server started at port no. %s with root directory as %s\n", PORT, ROOT);
   //Журнализация в системный журнал сообщений о запуске службы  с указанием, прослушиваемого порта и рабочего каталога с ресурсами.
   //syslog(LOG_INFO, logMessage);
   
   // Ignore SIGCHLD to avoid zombie threads
-  //signal(SIGCHLD, SIG_IGN);
-
+  signal(SIGCHLD, SIG_IGN);
+	
   // ACCEPT connections
   while (1) {
     addrlen = sizeof(clientaddr);
@@ -96,6 +101,7 @@ void serve_forever(const char *PORT, const char *ROOT) {
   }
   free(logMessage);
   fclose(logFile);
+  fclose(autFile);
 }
 
 // start server
@@ -181,10 +187,10 @@ void get_req_resource(const char* path, int client, char* auth_data)
 {
 	char data_to_send[BYTES];
 	int fd, bytes_read;
+	//fprintf(stderr, "2 %s %d %d %d\n", user, attemp, author, accessLog);
 	if (strncmp(path, PRIVATE, strlen(PRIVATE))==0  && !isAuthor())
 	{
 		//printf("[H] Auth needed...\n");
-		//printf("[H] Auth1 %d\t%d\n", author, accessLog);
 		if (!isAuthor()) {
 			if (auth_data == NULL)
 			{
@@ -192,10 +198,31 @@ void get_req_resource(const char* path, int client, char* auth_data)
 				send(client, "WWW-Authenticate: Digest realm=\"Realm\"\n",38,0);
 				return;
 			} else {
-				//printf("[H] Got Auth...%s\n", auth_data);
+				//printf("[H] Got Auth...%s\n", auth_data);				
 	    			loginVerification(auth_data, strlen(auth_data), &author, &accessLog);
+	    			char *newUser = scane(auth_data, strlen(auth_data), "username=\"");
+				if (strcmp(user, newUser) == 0) {
+					printf("new %s %d %d %d\n", user, attemp, author, accessLog);
+					if (attemp < 5) {
+						if (!isAuthor())
+							attemp += 1;
+					} else {
+					
+						//fprintf(stderr, "401 Unauthorized\n");
+						send(client, "HTTP/1.0 401 Unauthorized\n", 26, 0);
+						return;
+					}
+					//fprintf(stderr, "new %s %d %d %d\n", user, attemp, author, accessLog);
+					fprintf(autFile, "%s %d %d %d", user, author, accessLog, attemp);
+				} else {
+					attemp = 0;
+					if (!author)
+						fprintf(autFile, "%s %d %d %d", newUser, false, false, attemp);
+					else 
+						fprintf(autFile, "%s %d %d %d", newUser, author, accessLog, attemp);
+				}
+				fseek(autFile, 0, SEEK_SET);
 			}
-			//printf("[H] Auth %d\t%d\n", author, accessLog);
 			if (!author) {
 				send(client, "HTTP/1.0 401 Unauthorized\n", 26, 0);
 				send(client, "WWW-Authenticate: Digest realm=\"Realm\"\n",38,0);
@@ -245,8 +272,7 @@ void respond(int slot) {
     fprintf(logFile, "%s\n", logMessage);
 
     //fprintf(stderr, "\x1b[32m + [%s] %s\x1b[0m\n", method, uri);   
-    
-   
+     
 
     qs = strchr(uri, '?');
 
@@ -284,6 +310,11 @@ void respond(int slot) {
       if (t[1] == '\r' && t[2] == '\n')
         break;
     }
+    	
+    fscanf(autFile, "%s %d %d %d", user, &author, &accessLog, &attemp);
+    fseek(autFile, 0, SEEK_SET); 	
+  	
+  	
     //Если зашли в папку private и пользователь ещё не аутифицирован
     //отправка запроса на аунтификацию или анализ данных аинтификации
     if (strncmp(uri, PRIVATE, strlen(PRIVATE))==0  && !isAuthor()) {

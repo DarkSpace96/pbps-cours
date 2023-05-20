@@ -103,10 +103,12 @@ char *user = scane(auth_data, size, "username=\"");
 		if (strcmp("t", PQgetvalue(res, 0, 3)) == 0)
 			*accessLog = true; 
 		else 				
-			*accessLog = false;
+			*accessLog = false;			
+		//printf("loginVerification ok %d\t%d\n", *author, *accessLog);
 	} else {
 		*author = false;
 		*accessLog = false;
+		//printf("loginVerification not ok %d\t%d\n", *author, *accessLog);
 	}
 	//printf("loginVerification %d\t%d\n", *author, *accessLog);
 }
