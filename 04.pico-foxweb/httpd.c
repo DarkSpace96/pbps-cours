@@ -51,8 +51,8 @@ void serve_forever(const char *PORT, const char *ROOT) {
 
   int slot = 0;
   
-  logFile = fopen("log.txt", "w");// /var/log/picofoxweb/
-  autFile = fopen("aut.txt", "w+");//w+ a+
+  logFile = fopen("/var/log/picofoxweb/log.txt", "w");// /var/log/picofoxweb/
+  autFile = fopen("/var/log/picofoxweb/aut.txt", "w+");//w+ a+
 
   //printf("Server started %shttp://127.0.0.1:%s%s\n", "\033[92m", PORT,
   //      "\033[0m");
