@@ -62,7 +62,7 @@ char *user = scane(auth_data, size, "username=\"");
 	}
 	const char *paramValues[1]; 
 	paramValues[0] = user;
-	char *stm = "SELECT * FROM users WHERE Name=$1;";
+	char *stm = "SELECT * FROM usertable WHERE Name=$1;";
 	PGresult *res = PQexecParams(conn, stm, 1, NULL, paramValues,  NULL, NULL, 0);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK || PQgetvalue(res, 0, 0) == NULL) {
 		printf("No data retrieved\n");
