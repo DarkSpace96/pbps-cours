@@ -67,7 +67,7 @@ service postgresql status
 sudo -u postgres createdb autdb --owner postgres
 ~~~
 
-Для создания таблици и её заполнения запускаем из папки postgres программу create_table
+Для создания таблицы запускаем из папки postgres программу create_table
 
 - Сборка
 
@@ -79,6 +79,20 @@ gcc -o create_table create_table.c -I/usr/include/postgresql -lpq -std=c99
 
 ~~~
 ./create_table
+~~~
+
+Для заполнения таблицы запускаем из папки postgres программу select_table
+
+- Сборка
+
+~~~
+gcc -o select_table select_table.c -I/usr/include/postgresql -lpq -std=c99
+~~~
+
+- Запуск
+
+~~~
+./select_table -u [логин] -p [пароль] -a [доступ TRUE/FALSE]
 ~~~
 
 # Сборка/запуск/остановка проекта
