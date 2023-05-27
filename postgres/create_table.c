@@ -33,7 +33,7 @@ int main() {
     
     PQclear(res);
     
-    PGresult *res = PQexec(conn, "CREATE TABLE User(Id INTEGER PRIMARY KEY," \
+    PGresult *res = PQexec(conn, "CREATE TABLE users(Id INTEGER PRIMARY KEY," \
         "Name VARCHAR(20), Password VARCHAR(20), Private BOOL)");
         
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
